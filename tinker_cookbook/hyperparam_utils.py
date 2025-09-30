@@ -72,10 +72,32 @@ def get_lora_lr_over_full_finetune_lr(model_name: str, lora_alpha: int = 32) -> 
 
 
 def _get_hidden_size(model_name: str) -> int:
-    from transformers import AutoConfig
+    if "meta-llama/Llama-3" in model_name:
+        # Bypass HF_TOKEN requirement for Llama-3 models
+        return {
+            "meta-llama/Llama-3.2-1B": 2048,
+            "meta-llama/Llama-3.2-1B-Instruct": 2048,
+            "meta-llama/Llama-3.2-3B": 3072,
+            "meta-llama/Llama-3.2-3B-Instruct": 3072,
+            "meta-llama/Llama-3.1-8B": 4096,
+            "meta-llama/Llama-3.1-8B-Instruct": 4096,
+            "meta-llama/Llama-3.1-70B": 8192,
+            "meta-llama/Llama-3.3-70B-Instruct": 8192,
+        }[model_name]
 
     config = AutoConfig.from_pretrained(model_name)
     return config.hidden_size
+
+
+def _get_num_experts_per_tok(model_name: str) -> int:
+    assert not model_name.startswith("meta-llama/Llama-3"), (
+        "Llama-3 models don't have num_experts_per_tok"
+    )
+    config = AutoConfig.from_pretrained(model_name)
+    assert hasattr(config, "num_experts_per_tok"), (
+        "num_experts_per_tok is not in the model config, can't calculate with scale_moe_rank_by_topk"
+    )
+    return config.num_experts_per_tok
 
 
 def get_lora_param_count(
@@ -88,7 +110,6 @@ def get_lora_param_count(
     """
     Get the number of parameters in the LoRA adapter.
     """
-    model_config = AutoConfig.from_pretrained(model_name)
 
     dim_sum = 0
     dim_sum_experts = 0
@@ -110,10 +131,7 @@ def get_lora_param_count(
     non_expert_params = lora_rank * dim_sum
 
     if scale_moe_rank_by_topk and dim_sum_experts > 0:
-        assert hasattr(model_config, "num_experts_per_tok"), (
-            "num_experts_per_tok is not in the model config, can't calculate with scale_moe_rank_by_topk"
-        )
-        moe_rank_scale = model_config.num_experts_per_tok
+        moe_rank_scale = _get_num_experts_per_tok(model_name)
     else:
         moe_rank_scale = 1
     expert_params = dim_sum_experts * (lora_rank // moe_rank_scale)
@@ -127,6 +145,21 @@ def get_lora_param_count(
             "total_params": expert_params + non_expert_params,
         }
     )
+
+
+def get_lr(model_name: str, is_lora: bool = True) -> float:
+    base_lr = 5e-05
+    lora_multiplier = 10.0
+
+    lr = base_lr * lora_multiplier if is_lora else base_lr
+    if "llama" in model_name:
+        exponent_model = 0.781
+    elif "qwen" in model_name:
+        exponent_model = 0.0775
+    else:
+        assert False, f"Unknown model: {model_name}"
+    lr = lr * (2000 / _get_hidden_size(model_name)) ** exponent_model
+    return lr
 
 
 def get_full_finetune_param_count(model_name: str) -> float:

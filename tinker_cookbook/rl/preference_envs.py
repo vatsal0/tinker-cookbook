@@ -6,7 +6,6 @@ from typing import Callable, Sequence
 
 import chz
 import tinker
-from tinker import types
 from tinker_cookbook import renderers
 from tinker_cookbook.completers import StopCondition
 from tinker_cookbook.preference.preference_datasets import (
@@ -16,7 +15,6 @@ from tinker_cookbook.preference.types import (
     Comparison,
     LabeledComparison,
     PreferenceModel,
-    PreferenceModelFromChatRenderer,
 )
 from tinker_cookbook.rl.types import (
     Action,
@@ -65,7 +63,7 @@ class PreferenceEnv(Env):
         return StepResult(
             reward=0,
             episode_done=True,
-            next_observation=types.ModelInput.empty(),
+            next_observation=tinker.ModelInput.empty(),
             next_stop_condition=self.stop_condition,
             metrics={},
         )
@@ -108,53 +106,71 @@ class PairwisePreferenceGroupBuilder(EnvGroupBuilder):
     num_envs: int
     content_preprocessor: Callable[[str], str] | None = None  # e.g. strip out <thinking> tags
     matchup_group_size: int = 4  # divide group into smaller groups of this size for matchups
+    eval_target_completion_A: list[renderers.Message] | None = None
 
     async def make_envs(self) -> Sequence[Env]:
         return [
             PreferenceEnv(self.convo_prefix, self.policy_renderer) for _ in range(self.num_envs)
         ]
 
+    def _preprocess_message(self, message: renderers.Message) -> renderers.Message:
+        if self.content_preprocessor is not None:
+            message = {**message, "content": self.content_preprocessor(message["content"])}
+        return message
+
+    def get_response_message(self, trajectory: Trajectory) -> tuple[list[renderers.Message], bool]:
+        response, is_valid = self.policy_renderer.parse_response(
+            trajectory.transitions[0].ac.tokens
+        )
+        return [response], is_valid
+
+    def comparison_reward_for_second_messages(
+        self, message_i: list[renderers.Message], message_j: list[renderers.Message]
+    ) -> Comparison:
+        comparison = Comparison(
+            prompt_conversation=self.convo_prefix,
+            completion_A=[self._preprocess_message(m) for m in message_i],
+            completion_B=[self._preprocess_message(m) for m in message_j],
+        )
+        return comparison
+
     async def compute_group_rewards(
         self, trajectory_group: list[Trajectory]
     ) -> list[tuple[float, Metrics]]:
         assert all(len(trajectory.transitions) == 1 for trajectory in trajectory_group)
         # Get response from each trajectory
-        response_tuples = [
-            self.policy_renderer.parse_response(trajectory.transitions[0].ac.tokens)
-            for trajectory in trajectory_group
-        ]
+        response_tuples = [self.get_response_message(trajectory) for trajectory in trajectory_group]
         response_messages, is_valid_list = safezip(*response_tuples)
 
-        pairs = get_pairs_chunked(
+        # if the matching group size is 3 and len(response_messages) is 6
+        # then it will return something like
+        # [(0, 1), (0, 2), (1, 2), (3, 4), (3, 5), (4, 5)]
+        # so we don't end up with O(n^2) comparisons
+        comparison_indices_pairs = get_pairs_chunked(
             len(response_messages), self.tournament_pattern, self.matchup_group_size
         )
 
-        def preprocess_message(message: renderers.Message) -> renderers.Message:
-            if self.content_preprocessor is not None:
-                message = {**message, "content": self.content_preprocessor(message["content"])}
-            return message
-
-        async def compute_j_reward(i: int, j: int) -> float:
-            comparison = Comparison(
-                prompt_conversation=self.convo_prefix,
-                completion_A=[preprocess_message(response_messages[i])],
-                completion_B=[preprocess_message(response_messages[j])],
+        j_comparisons = [
+            self.comparison_reward_for_second_messages(
+                message_i=response_messages[i], message_j=response_messages[j]
             )
-            return await self.preference_model(comparison)
-
-        pair_rewards = await asyncio.gather(*[compute_j_reward(i, j) for i, j in pairs])
+            for i, j in comparison_indices_pairs
+        ]
+        j_rewards = await asyncio.gather(
+            *[self.preference_model(comparison) for comparison in j_comparisons]
+        )
         win_minus_loss_list = [0.0 for _ in range(len(response_messages))]
         matchup_count = [0 for _ in range(len(response_messages))]
-        for (i, j), reward in safezip(pairs, pair_rewards):
-            win_minus_loss_list[j] += reward
-            win_minus_loss_list[i] -= reward
+        for (i, j), j_reward in safezip(comparison_indices_pairs, j_rewards):
+            win_minus_loss_list[j] += j_reward
+            win_minus_loss_list[i] -= j_reward
             matchup_count[j] += 1
             matchup_count[i] += 1
         format_coef = 1.0
         return [
             (
                 win_minus_loss / matchup_count + format_coef * (float(is_valid) - 1.0),
-                {"win_minus_loss": win_minus_loss, "format": is_valid},
+                {"win_minus_loss": win_minus_loss / matchup_count, "format": is_valid},
             )
             for win_minus_loss, is_valid, matchup_count in safezip(
                 win_minus_loss_list, is_valid_list, matchup_count
@@ -209,29 +225,23 @@ class PairwisePreferenceDataset(RLDataset):
 @chz.chz
 class PairwisePreferenceRLDatasetBuilder(RLDatasetBuilder):
     comparison_builder: ComparisonDatasetBuilder
-    renderer_name: str
-    model_name_for_tokenizer: str
     batch_size: int
+    policy_renderer_name: str
+    policy_model_name: str
     tournament_pattern: TournamentPattern = TournamentPattern.ALL_PAIRS_BOTH_WAYS
-    model_path: str
     group_size: int
-    base_url: str | None = None
     content_preprocessor: Callable[[str], str] | None = None
+    preference_model_builder: Callable[[], PreferenceModel]
 
     async def __call__(self) -> tuple[PairwisePreferenceDataset, None]:
-        tokenizer = get_tokenizer(self.model_name_for_tokenizer)
-        renderer = renderers.get_renderer(self.renderer_name, tokenizer=tokenizer)
-
+        policy_renderer = renderers.get_renderer(
+            self.policy_renderer_name, get_tokenizer(self.policy_model_name)
+        )
         return PairwisePreferenceDataset(
             comparison_builder=self.comparison_builder,
-            renderer=renderer,
+            renderer=policy_renderer,
             batch_size=self.batch_size,
-            preference_model=PreferenceModelFromChatRenderer(
-                convo_renderer=renderer,
-                sampling_client=tinker.ServiceClient(base_url=self.base_url).create_sampling_client(
-                    model_path=self.model_path
-                ),
-            ),
+            preference_model=self.preference_model_builder(),
             tournament_pattern=self.tournament_pattern,
             group_size=self.group_size,
             content_preprocessor=self.content_preprocessor,

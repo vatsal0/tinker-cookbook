@@ -6,8 +6,8 @@ from typing import Any
 
 import chz
 import tinker
-from tinker import types
 from tinker_cookbook import renderers
+from tqdm.asyncio import tqdm_asyncio
 
 LANGUAGE_CLASSIFICATION_PROMPT = """You are a precise language classifier.
 
@@ -86,7 +86,7 @@ def setup_clients():
         base_model="Qwen/Qwen3-30B-A3B", rank=32
     )
     tokenizer = training_client.get_tokenizer()
-    renderer = renderers.get_renderer("qwen2p5", tokenizer)
+    renderer = renderers.get_renderer("qwen3", tokenizer)
 
     print("Creating sampling client")
     sampling_client = training_client.save_weights_and_get_sampling_client(name="0000")
@@ -106,8 +106,8 @@ async def create_data_async(cfg: Config, sampling_client: Any, tokenizer: Any, r
         sentence: str,
     ) -> str | None:
         prompt = LANGUAGE_CLASSIFICATION_PROMPT.format(text=sentence)
-        tokenized_prompt = types.ModelInput.from_ints(tokenizer.encode(prompt))
-        params = types.SamplingParams(
+        tokenized_prompt = tinker.ModelInput.from_ints(tokenizer.encode(prompt))
+        params = tinker.SamplingParams(
             max_tokens=1000, temperature=0.15, stop=renderer.get_stop_sequences()
         )
         result = await sampling_client.sample_async(
@@ -118,10 +118,13 @@ async def create_data_async(cfg: Config, sampling_client: Any, tokenizer: Any, r
         # the final answer is the xx part
         search_response = re.search(r"Final Answer: (\w+)", response)
         final_answer = search_response.group(1) if search_response else None
-        print(final_answer)
         return final_answer
 
-    final_answers = await asyncio.gather(*[sample_from_model(sentence) for sentence in sentences])
+    final_answers: list[str | None] = []
+    for coro in tqdm_asyncio.as_completed(
+        [sample_from_model(s) for s in sentences], total=len(sentences)
+    ):
+        final_answers.append(await coro)
 
     # save the input and final answer to a file
     with open(cfg.output_file, "w") as f:

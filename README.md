@@ -1,58 +1,44 @@
-Implementations of post-training algorithms using the Tinker API. See [public documentation](https://tinker-docs.thinkingmachines.dev/cookbook).
-
-There are several main directories, including different types of algorithms and datasets.
-
-- [supervised](tinker_cookbook/supervised): supervised learning, aka supervised fine-tuning (SFT)
-- [preference](tinker_cookbook/preference): preference datasets that can be used for training reward models or training policies with direct preference optimization (DPO)
-- [rl](tinker_cookbook/rl): reinforcement learning on general MDPs.
-
-The user-friendly training entrypoints can be found in [supervised/train_cli.py](tinker_cookbook/supervised/train_cli.py) and [rl/train_cli.py](tinker_cookbook/rl/train_cli.py).
-
-## Classes
-
-There are a lot of different classes, which might make the code feel less approachable. However, they follow *the builder pattern*, and the code should be less confusing when you know the pattern.
-
-We can illustrate the pattern with the two main examples:
-
-- A `SupervisedDatasetBuilder` is a configuration object which builds a `SupervisedDataset`.
-- An `RLDatasetBuilder` is a configuration object which builds an `RLDataset`, which generates batches of `EnvGroupBuilder` objects, which each generate a group of `Env` objects.
-
-Here, the `SupervisedDatasetBuilder`, `RLDatasetBuilder`, and `EnvGroupBuilder` are all configuration objects, which have a `__call__` method that builds another object. You can see these objects in [supervised/types.py](tinker_cookbook/supervised/types.py) and [rl/types.py](tinker_cookbook/rl/types.py).
-
-In general, we use a lot of configuration objects, with a `__call__` method that returns a heavyweight object (like a dataset). We use `chz` for the configuration objects -- it's similar to a dataclass but with some extra features that are nice for configs. We use either dataclasses or regular python classes for the heavyweight objects.
-
-## Envs
-
-An `Env` is an RL environment. For those with an RL background, it roughly corresponds to an MDP or a POMDP, however we use in more general cases (such as multi-agent settings) that don't strictly correspond to the MDP/POMDP formalism. It's roughly analogous the concept of an Env in OpenAI Gym, but unlike OpenAI Gym, we don't have a `reset` method; rather, the env should be discarded after a rollout. Any shared resources should be maintained by whatever object is creating the envs.
-
-The `Env`s are created by `EnvGroupBuilder`s. The group of envs returned by `EnvGroupBuilder` have something in common; either they correspond to the same task (in which case we can use this information for variance reduction, as in GRPO, which centers per group); or, we can use the group to define a multi-agent environment.
-
-- One common multi-agent environment is where we use a pairwise preference model to compare pairs of completions.
-- We can also use the group to define a two-player game. Some two player games such as tic-tac-toe are currently supported through the [textarena](tinker_cookbook/rl/textarena_envs.py) environments.
+// TODO(tianyi) Fancy hero image?
 
 
-## Notation
+Tinker cookbook collects recommended programming patterns, reusable utilities, and extensible abstractions to help people build on [Tinker](https://tinker-docs.thinkingmachines.ai/).
 
-We'll use subscripts to indicate the shapes of objects. For example, `tokens_P_G_T` indicates a three-dimensional array of tokens, with `P` problems, `G` groups, and `T` tokens per groups, so `tokens_P_G_T[p][g][t]` should refer to a single token. In many cases, the arrays will be ragged. E.g., the `T` axis will have different lengths for different `(p,g)`. Sometimes, a given dimension will be flattened from two dimensions. If we write `tokens_PG_T`, that means that we have a two dimensional array, where the 0th dimension is flattened from the `P` and `G` dimensions.
+## Installation
 
-### Common Dimension Names
+1. Obtain a Tinker API token and export it as `TINKER_API_KEY`. // TODO(tianyi): add onboarding flow link
+2. Install tinker python client via `pip install git+https://github.com/thinking-machines-lab/tinker.git` // TODO(tianyi): update to pypi
+3. As a starting point, we recommend cloning this repo locally and installing it via `pip install -e .`.
 
-Here are the standard dimension subscripts used throughout the codebase:
+## Usage
 
-- `_D`: Data/Datum dimension (for training data items)
-- `_G`: Group dimension (for multiple attempts/rollouts of the same problem)
-- `_P`: Problem dimension (for different problems/prompts)
-- `_T`: Token/Time dimension (for sequences)
+We build Tinker cookbook to allow flexible usage. You can run our examples, build your own training loop, or simply import useful utilities from this repo.
 
-The relationship between dimensions in RL:
-- A batch contains multiple problems (`_P`)
-- Each problem spawns multiple attempts/environments (`_G`), forming a group
-- Each attempt produces one trajectory
-- Advantages are normalized within each group (across the `_G` dimension)
+### Running our examples
 
-Examples:
-- `env_group_builders_P`: A list of environment builders, one per problem
-- `trajectories_G`: Multiple trajectories from attempts at the same problem
-- `rewards_G`: Rewards for each attempt within a group
-- `tokens_P_G_T`: Tokens with problem, group, and time dimensions
-- `data_D`: A list of training data items
+`tinker_cookbook/supervised/train.py` and `tinker_cookbook/rl/train.py` contain our reference entrypoints for supervised learning and reinforcement learning accordingly.
+
+Navigate to `tinker_cookbook/recipes` and you will find ready-to-go post-training examples. Here are the list of examples you can try out:
+- `chat_sl` shows supervised fine-tuning on Tulu3
+- `prompt_distillation` XXXX // TODO(tianyi): add take away message
+- `math_rl` demontrates Refinforcement Learning with Verifiable Reward (RLVR) on math problems
+- `multiplayer_rl` leverages the flexibility of Tinker to learn on multiplayer / multi-model games
+- `tool_use/search` replicates a recent academic paper on using RL to teach the ability to use a vector search tool.
+
+### Building your own
+
+`sl_basic.py` and `rl_basic.py` remove most of our abstractions and provide clean starting points for building your own projects.
+
+### Import our utilities
+
+Tinker cookbook includes several patterns we like. Here's a quick overview,
+- [renderers]() converts tokens from/to structured chat message objects
+- [hyperparam_utils]() helps calculate hyperparameters suitable for LoRAs
+- [evaluation]() shows how to evaluate Tinker models and also integrate with InspectAI to make evaluating on standard benchmarks easy.
+
+## Contributing
+
+We welcome community contributions to Tinker cookbook. At the same time, we want to keep this official repo lean and hackable.
+If you build a cool project, please share with us and we'd love to highlight them in `FEATURED_PROJECTS.md`.
+If you want to help us improve the core utilities in Tinker cookbook, please be familiar with `CONTRIBUTING.md`. We also post ideas on where we could use help.
+
+For general feedback, you can XXXX // TODO(tianyi): check with clare

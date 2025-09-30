@@ -1,6 +1,8 @@
 from tinker_cookbook import cli_utils, model_info
+from tinker_cookbook.recipes.chat_sl import chat_datasets
 from tinker_cookbook.renderers import TrainOnWhat
-from tinker_cookbook.supervised import chat_datasets, train
+from tinker_cookbook.supervised import train
+from tinker_cookbook.supervised.data import FromConversationFileBuilder
 from tinker_cookbook.supervised.types import ChatDatasetBuilderCommonConfig
 
 
@@ -16,7 +18,7 @@ def build_config() -> train.Config:
     )
     dataset = chat_datasets.NoRobotsBuilder(common_config=common_config)
     if 0:  # To swap in your own dataset:
-        dataset = chat_datasets.FromConversationFileBuilder(
+        dataset = FromConversationFileBuilder(
             common_config=common_config, file_path="/path/to/your/dataset.jsonl"
         )
         # ^^^ Create a dataset from a JSONL file in the same format as

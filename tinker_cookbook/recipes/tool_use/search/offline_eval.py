@@ -143,7 +143,7 @@ async def main():
         "--split", choices=["train", "test"], default="test", help="Dataset split to use"
     )
     parser.add_argument(
-        "--base-model", type=str, default="Qwen/Qwen2.5-VL-7B-Instruct", help="Base model to use"
+        "--base-model", type=str, default="Qwen/Qwen3-4B-Instruct-2507", help="Base model to use"
     )
     parser.add_argument(
         "--tinker-checkpoint-url", type=str, required=True, help="Tinker checkpoint URL"

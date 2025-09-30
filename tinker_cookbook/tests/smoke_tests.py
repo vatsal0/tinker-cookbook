@@ -2,12 +2,15 @@ import asyncio
 from typing import cast
 
 import datasets
-from tinker import types
+import tinker
 from tinker_cookbook import renderers
-from tinker_cookbook.rl import arithmetic_env
+from tinker_cookbook.recipes.math_rl import arithmetic_env
 from tinker_cookbook.rl import train as rl_train
-from tinker_cookbook.supervised import chat_datasets
 from tinker_cookbook.supervised import train as supervised_train
+from tinker_cookbook.supervised.data import (
+    SupervisedDatasetFromHFDataset,
+    conversation_to_datum,
+)
 from tinker_cookbook.tokenizer_utils import get_tokenizer
 
 
@@ -26,12 +29,10 @@ def test_supervised():
         dataset = dataset.shuffle(seed=0)
         train_ds = dataset.take(batch_size * 3)
 
-        def map_fn(row: dict) -> types.Datum:
-            return chat_datasets.conversation_to_datum(row["messages"], renderer, max_length)
+        def map_fn(row: dict) -> tinker.Datum:
+            return conversation_to_datum(row["messages"], renderer, max_length)
 
-        return chat_datasets.SupervisedDatasetFromHFDataset(
-            train_ds, batch_size=batch_size, map_fn=map_fn
-        ), None
+        return SupervisedDatasetFromHFDataset(train_ds, batch_size=batch_size, map_fn=map_fn), None
 
     cfg = supervised_train.Config(
         model_name=model_name,

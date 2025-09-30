@@ -1,15 +1,13 @@
 import chz
-from tinker import types
+import tinker
 from tinker_cookbook.preference.preference_datasets import (
     ComparisonDatasetBuilder,
 )
 from tinker_cookbook.preference.types import (
     LabeledComparison,
 )
-from tinker_cookbook.supervised.chat_datasets import (
-    SupervisedDatasetFromHFDataset,
-)
 from tinker_cookbook.supervised.common import datum_from_tokens_weights
+from tinker_cookbook.supervised.data import SupervisedDatasetFromHFDataset
 from tinker_cookbook.supervised.types import ChatDatasetBuilder, SupervisedDataset
 
 
@@ -26,7 +24,7 @@ class DPODatasetBuilderFromComparisons(ChatDatasetBuilder):
         train_dataset, test_dataset = self.comparison_builder.get_train_and_test_datasets()
         renderer = self.renderer
 
-        def comparison_to_datum(labeled_comparison: LabeledComparison) -> list[types.Datum]:
+        def comparison_to_datum(labeled_comparison: LabeledComparison) -> list[tinker.Datum]:
             chosen_completion = (
                 labeled_comparison.comparison.completion_A
                 if labeled_comparison.label == "A"
@@ -59,7 +57,7 @@ class DPODatasetBuilderFromComparisons(ChatDatasetBuilder):
                 ),
             ]
 
-        def example_to_data(example: dict[str, str]) -> list[types.Datum]:
+        def example_to_data(example: dict[str, str]) -> list[tinker.Datum]:
             labeled_comparison = self.comparison_builder.example_to_labeled_comparison(example)
             if labeled_comparison is None:
                 return []

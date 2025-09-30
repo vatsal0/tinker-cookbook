@@ -1,0 +1,50 @@
+"""
+Example of using LLM-as-a-judge with inspect_ai.
+
+To run this task, use:
+    uv run python -m tinker_cookbook.eval.run_inspect_evals \
+        model_path=tinker://your-model-path \
+        tasks=tinker_cookbook.eval.custom_inspect_task:example_lm_as_judge \
+        renderer_name=role_colon \
+        model_name=Qwen/Qwen3-8B-Base
+"""
+
+from inspect_ai import Task, task
+from inspect_ai.dataset import MemoryDataset, Sample
+from inspect_ai.scorer import model_graded_qa
+from inspect_ai.solver import generate
+
+QA_DATASET = MemoryDataset(
+    name="qa_dataset",
+    samples=[
+        Sample(
+            input="What is the capital of France?",
+            target="Paris",
+        ),
+        Sample(
+            input="What is the capital of Italy?",
+            target="Rome",
+        ),
+    ],
+)
+
+
+@task
+def example_lm_as_judge() -> Task:
+    """
+    Example task using LLM-as-a-judge scoring.
+
+    Note: The grader model defaults to the model being evaluated.
+    To use a different grader model, specify it with --model-grader when using inspect directly.
+    """
+    return Task(
+        name="llm_as_judge",
+        dataset=QA_DATASET,
+        solver=generate(),
+        scorer=model_graded_qa(
+            instructions="Grade strictly against the target text as general answer key and rubric. "
+            "Respond 'GRADE: C' if correct or 'GRADE: I' otherwise.",
+            partial_credit=False,
+            # model parameter is optional - if not specified, uses the model being evaluated
+        ),
+    )

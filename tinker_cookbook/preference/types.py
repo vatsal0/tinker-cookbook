@@ -9,10 +9,12 @@ import logging
 from dataclasses import dataclass
 from typing import Literal
 
+import chz
+import tinker
 import torch
 from tinker import SamplingClient, types
 from tinker_cookbook import renderers
-from tinker_cookbook.tokenizer_utils import Tokenizer
+from tinker_cookbook.tokenizer_utils import Tokenizer, get_tokenizer
 
 logger = logging.getLogger(__name__)
 
@@ -92,10 +94,15 @@ class ComparisonRendererFromChatRenderer(ComparisonRenderer):
 class PreferenceModel:
     async def __call__(self, comparison: Comparison) -> float:
         """
-        1: A is strongly preferred
+        1: B is strongly preferred
         0: Tie
-        -1: B is strongly preferred
+        -1: A is strongly preferred
         """
+        raise NotImplementedError
+
+
+class PreferenceModelBuilder:
+    def __call__(self) -> PreferenceModel:
         raise NotImplementedError
 
 
@@ -122,3 +129,18 @@ class PreferenceModelFromChatRenderer(PreferenceModel):
         else:
             logger.warning(f"Invalid output preference model output: '{str_output}'")
             return 0.0
+
+
+@chz.chz
+class PreferenceModelBuilderFromChatRenderer(PreferenceModelBuilder):
+    renderer_name: str
+    model_name: str
+    rm_weights_path: str
+    base_url: str | None = None
+
+    def __call__(self) -> PreferenceModel:
+        convo_renderer = renderers.get_renderer(self.renderer_name, get_tokenizer(self.model_name))
+        sampling_client = tinker.ServiceClient(base_url=self.base_url).create_sampling_client(
+            model_path=self.rm_weights_path,
+        )
+        return PreferenceModelFromChatRenderer(convo_renderer, sampling_client)
