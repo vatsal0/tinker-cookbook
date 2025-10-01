@@ -28,7 +28,7 @@ To use Tinker to train LLMs to play twenty questions, we mainly need to implemen
 
 Each environment object has exactly one secret word; it determines what the conversation looks like based on the player’s (policy’s) questions (actions).
 
-The most important logic happens within the class method `TwentyQuestionsEnv.step` in `tinker_cookbook/recipes/twenty_questions/env.py`. This `step` function takes in:
+The most important logic happens within the class method `TwentyQuestionsEnv.step` in [env.py](./env.py). This `step` function takes in:
 
 * An action from the language model, which is a sequence of int tokens that can be parsed into a natural language question, e.g., “`Is it a plant?`“
 

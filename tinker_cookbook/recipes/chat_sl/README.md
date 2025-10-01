@@ -35,7 +35,7 @@ Performance can be further improved by training longer with a higher `lora_rank`
 
 ## Adding your own dataset
 
-The base classes in `tinker-cookbook/tinker_cookbook/supervised/data.py` support loading new data in the following way:
+The base classes in [tinker_cookbook/supervised/data.py](../../supervised/data.py) support loading new data in the following way:
 - `SupervisedDatasetFromHFDataset` loads dataset on huggingface hub with a postprocessing function
 - `StreamingSupervisedDatasetFromHFDataset` works simiarly, but supports streaming
 - `FromConversationFileBuilder` supports data loading from a JSONL file

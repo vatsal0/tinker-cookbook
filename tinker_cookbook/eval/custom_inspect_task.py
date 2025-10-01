@@ -2,11 +2,11 @@
 Example of using LLM-as-a-judge with inspect_ai.
 
 To run this task, use:
-    uv run python -m tinker_cookbook.eval.run_inspect_evals \
-        model_path=tinker://your-model-path \
-        tasks=tinker_cookbook.eval.custom_inspect_task:example_lm_as_judge \
-        renderer_name=role_colon \
-        model_name=Qwen/Qwen3-8B-Base
+python -m tinker_cookbook.eval.run_inspect_evals \
+    model_path=tinker://your-model-path \
+    tasks=tinker_cookbook.eval.custom_inspect_task:example_lm_as_judge \
+    renderer_name=role_colon \
+    model_name=Qwen/Qwen3-8B-Base
 """
 
 import tinker

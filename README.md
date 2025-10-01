@@ -10,7 +10,7 @@ We present two libraries to help the broader community customize their language 
 
 ## Installation
 
-1. Obtain a Tinker API token and export it as environment variable `TINKER_API_KEY`. You will only be able to do this after you have access to Tinker. Sign up for waitlist at [thinkingmachines.ai/tinker](https://thinkingmachines.ai/tinker). After you have access, you can create an API key from your console: [tinker-console.thinkingmachines.ai](https://tinker-console.thinkingmachines.ai).
+1. Obtain a Tinker API token and export it as environment variable `TINKER_API_KEY`. // TODO(tianyi): add onboarding flow link
 2. Install tinker python client via `pip install tinker`
 3. We recommend installing `tinker-cookbook` in a virtual env either with `conda` or `uv`. For running most examples, you can install via `pip install -e .`.
 
@@ -54,7 +54,7 @@ These examples are located in each subfolder, and their `README.md` files will w
 Tinker cookbook includes several utilities. Here's a quick overview:
 - [renderers](tinker_cookbook/renderers.py) converts tokens from/to structured chat message objects
 - [hyperparam_utils](tinker_cookbook/hyperparam_utils.py) helps calculate hyperparameters suitable for LoRAs
-- [evaluation](tinker_cookbook/evaluators.py) provides abstractions for evaluating Tinker models and [inspect_evaluation](tinker_cookbook/inspect_evaluators.py) shows how to integrate with InspectAI to make evaluating on standard benchmarks easy.
+- [evaluation](tinker_cookbook/eval/evaluators.py) provides abstractions for evaluating Tinker models and [inspect_evaluation](tinker_cookbook/eval/inspect_evaluators.py) shows how to integrate with InspectAI to make evaluating on standard benchmarks easy.
 
 ## Contributing
 

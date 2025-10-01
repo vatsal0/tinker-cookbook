@@ -14,14 +14,14 @@ We're designing the codebase with the following goals:
 
 To achieve this, we'll use the following structure around training scripts:
 
-- There's a main training function, such as `sft.py` or `rl_bandit/train.py`, which contains the main loop.
+- There's a main training function, such as [rl/train.py](tinker_cookbook/rl/train.py) or [supervised/train.py](tinker_cookbook/supervised/train.py), which contains the main loop.
     - This function contains a detailed config object (`Config`), which isn't constructable from the command line.
     - The config contains members that specify things like datasets and evals. However, these should be chz configs (with a `.build` method that constructs the actual object) or callables (we recommend using functools.partial). This way, the config is serializable, which is useful for sweeps.
-- There's an auxiliary script, called something like `sft_cli.py` or `rl_bandit/train_cli.py`, which contains a smaller config object (`CLIConfig`), which is constructable from the command line. This script is useful to let people get started with the library, without digging into a lot of code and learning about new classes.
+- There are launch scripts that assemble training configs (e.g., [recipes/math_rl/train.py](tinker_cookbook/recipes/math_rl/train.py)), which construct a smaller config object (`CLIConfig`) from the command line.
 
 ## Async
 
-Async is very useful for RL, where it allows us to make many queries in parallel (e.g., sampling calls). For all of the interfaces used in RL (such as the `Env` class), all the methods that take nontrivial amounts of time should be async. For some of the other code, such as `sft.py`, we've chosen not to use async methods, just to make it more beginner-friendly, as many python programmers are not familiar with async.
+Async is very useful for RL, where it allows us to make many queries in parallel (e.g., sampling calls). For all of the interfaces used in RL (such as the `Env` class), all the methods that take nontrivial amounts of time should be async. For some of the other code, such as [recipes/sl_loop.py](tinker_cookbook/recipes/sl_loop.py), we've chosen not to use async methods, just to make it more beginner-friendly, as many python programmers are not familiar with async.
 
 ## Typing
 
@@ -47,7 +47,7 @@ An `Env` is an RL environment. For those with an RL background, it roughly corre
 The `Env`s are created by `EnvGroupBuilder`s. The group of envs returned by `EnvGroupBuilder` have something in common; either they correspond to the same task (in which case we can use this information for variance reduction, as in GRPO, which centers per group); or, we can use the group to define a multi-agent environment.
 
 - One common multi-agent environment is where we use a pairwise preference model to compare pairs of completions.
-- We can also use the group to define a two-player game. Some two player games such as tic-tac-toe are currently supported through the [textarena](tinker_cookbook/rl/textarena_envs.py) environments.
+- We can also use the group to define a two-player game. Some two player games such as tic-tac-toe are currently supported through the [text_arena](tinker_cookbook/recipes/multiplayer_rl/text_arena/env.py) environments.
 
 
 ## Notation
