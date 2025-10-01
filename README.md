@@ -3,16 +3,17 @@
   <img src="assets/tinker-cover.png" width="60%" />
 </div>
 
-We present two libraries to help the broader community customize their language models: `tinker` and `tinker-cookbook`.
+We provide two libraries for the broader community to customize their language models: `tinker` and `tinker-cookbook`.
 
 - `tinker` is a training SDK for researchers and developers to fine-tune language models. You send API requests to us and we handle the complexities of distributed training.
 - `tinker-cookbook` includes realistic examples of fine-tuning language models. It builds on the Tinker API and provides common abstractions to fine-tune language models.
 
 ## Installation
 
-1. Obtain a Tinker API token and export it as environment variable `TINKER_API_KEY`. You will only be able to do this after you have access to Tinker. Sign up for waitlist at [thinkingmachines.ai/tinker](https://thinkingmachines.ai/tinker). After you have access, you can create an API key from your console: [tinker-console.thinkingmachines.ai](https://tinker-console.thinkingmachines.ai).
-2. Install tinker python client via `pip install tinker`
-3. We recommend installing `tinker-cookbook` in a virtual env either with `conda` or `uv`. For running most examples, you can install via `pip install -e .`.
+1. Sign up for Tinker through the [waitlist](https://thinkingmachines.ai/tinker).
+2. Once you have access, create an API key from the [console](https://tinker-console.thinkingmachines.ai) and export it as environment variable `TINKER_API_KEY`.
+3. Install tinker python client via `pip install tinker`
+4. We recommend installing `tinker-cookbook` in a virtual env either with `conda` or `uv`. For running most examples, you can install via `pip install -e .`.
 
 ## Tinker
 
