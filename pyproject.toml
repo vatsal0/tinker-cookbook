@@ -3,6 +3,9 @@ name = "tinker_cookbook"
 version = "0.1.0"
 description = "Implementations of post-training algorithms using the Tinker API"
 readme = "README.md"
+authors = [
+{ name = "Tinker authors", email = "tinker@thinkingmachines.ai" },
+]
 requires-python = ">=3.11"
 dependencies = [
     "chz",
@@ -22,6 +25,11 @@ dependencies = [
     "math-verify",
     "scipy",
 ]
+
+[project.urls]
+Homepage = "https://thinkingmachines.ai/tinker"
+Repository = "https://github.com/thinking-machines-lab/tinker"
+Documentation = "https://tinker-docs.thinkingmachines.ai/"
 
 [project.optional-dependencies]
 dev = [
