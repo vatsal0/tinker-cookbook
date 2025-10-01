@@ -1,29 +1,23 @@
-# Tinker Cookbook
-
+<h1 align="center">Tinker Cookbook</h1>
 <div align="center">
   <img src="assets/tinker-cover.png" width="60%" />
-  <br/>
-  <em>Tinker: a training API for researchers and developers</em>
-  <br/>
-  <div></div>
-  <div></div>
 </div>
 
+We present two libraries to help the broader community customize their language models: `tinker` and `tinker-cookbook`.
 
-To help the broader community customize their language models, we release two libraries: Tinker and Tinker Cookbook.
-- Tinker includes primitives to fine-tune language models. It sends API requests to us, while we handle the complexity of distributed training.
-- Tinker Cookbook includes realistic examples to fine-tune language models. It builds on the Tinker API and provides commonly used abstractions to fine-tune language models.
+- `tinker` is a training SDK for researchers and developers to fine-tune language models. You send API requests to us and we handle the complexities of distributed training.
+- `tinker-cookbook` includes realistic examples of fine-tuning language models. It builds on the Tinker API and provides common abstractions to fine-tune language models.
 
 ## Installation
 
-1. Obtain a Tinker API token and export it as `TINKER_API_KEY`. // TODO(tianyi): add onboarding flow link
+1. Obtain a Tinker API token and export it as environment variable `TINKER_API_KEY`. You will only be able to do this after you have access to Tinker. Sign up for waitlist at [thinkingmachines.ai/tinker](https://thinkingmachines.ai/tinker). After you have access, you can create an API key from your console: [tinker-console.thinkingmachines.ai](https://tinker-console.thinkingmachines.ai).
 2. Install tinker python client via `pip install tinker`
 3. We recommend installing `tinker-cookbook` in a virtual env either with `conda` or `uv`. For running most examples, you can install via `pip install -e .`.
 
 ## Tinker
 
 Refer to the [docs](https://tinker-docs.thinkingmachines.ai/training-sampling) to start from basics.
-We introduce a few Tinker primitives, the basic components to fine-tune LLMs.
+Here we introduce a few Tinker primitives - the basic components to fine-tune LLMs:
 
 ```python
 service_client = tinker.ServiceClient()
@@ -39,7 +33,7 @@ sampling_client = training_client.save_weights_and_get_sampling_client(name="my_
 sampling_client.sample(...)
 ```
 
-`tinker_cookbook/recipes/sl_loop.py` and `tinker_cookbook/recipes/rl_loop.py` include minimal examples of using these primitives to fine-tune LLMs.
+See [tinker_cookbook/recipes/sl_loop.py](tinker_cookbook/recipes/sl_loop.py) and [tinker_cookbook/recipes/rl_loop.py](tinker_cookbook/recipes/rl_loop.py) for minimal examples of using these primitives to fine-tune LLMs.
 
 ### Tinker Cookbook
 
