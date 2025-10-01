@@ -38,23 +38,24 @@ See [tinker_cookbook/recipes/sl_loop.py](tinker_cookbook/recipes/sl_loop.py) and
 ### Tinker Cookbook
 
 Besides these primitives, we also offer **Tinker Cookbook** (a.k.a. this repo), a library of a wide range of abstractions to help you customize training environments.
-`tinker_cookbook/recipes/sl_basic.py` and `tinker_cookbook/recipes/rl_basic.py` contain minimal examples to configure supervised learning and reinforcement learning.
+[`tinker_cookbook/recipes/sl_basic.py`](tinker_cookbook/recipes/sl_basic.py) and [`tinker_cookbook/recipes/rl_basic.py`](tinker_cookbook/recipes/rl_basic.py) contain minimal examples to configure supervised learning and reinforcement learning.
 
-We also include a wide range of more sophisticated examples in the `tinker_cookbook/recipes/` folder:
-1. **Math reasoning**: improve LLM reasoning capability by rewarding it for answering math questions correctly.
-2. **Preference learning**: showcase a three-stage RLHF pipeline: 1) supervised fine-tuning, 2) learning a reward model, 3) RL against the reward model.
-3. **Tool use**: train LLMs to better use retrieval tools to answer questions more accurately.
-4. **Prompt distillation**: internalize long and complex instructions into LLMs.
-5. **Multi-Agent**: optimize LLMs to play against another LLM or themselves.
+We also include a wide range of more sophisticated examples in the [`tinker_cookbook/recipes/`](tinker_cookbook/recipes/) folder:
+1. **[Chat supervised learning](tinker_cookbook/recipes/chat_sl/)**: supervised fine-tuning on conversational datasets like Tulu3.
+2. **[Math reasoning](tinker_cookbook/recipes/math_rl/)**: improve LLM reasoning capability by rewarding it for answering math questions correctly.
+3. **[Preference learning](tinker_cookbook/recipes/preference/)**: showcase a three-stage RLHF pipeline: 1) supervised fine-tuning, 2) learning a reward model, 3) RL against the reward model.
+4. **[Tool use](tinker_cookbook/recipes/tool_use/)**: train LLMs to better use retrieval tools to answer questions more accurately.
+5. **[Prompt distillation](tinker_cookbook/recipes/prompt_distillation/)**: internalize long and complex instructions into LLMs.
+6. **[Multi-Agent](tinker_cookbook/recipes/multiplayer_rl/)**: optimize LLMs to play against another LLM or themselves.
 
 These examples are located in each subfolder, and their `README.md` files will walk you through the key implementation details, the commands to run them, and the expected performance.
 
 ### Import our utilities
 
 Tinker cookbook includes several utilities. Here's a quick overview:
-- [renderers](tinker_cookbook/renderers.py) converts tokens from/to structured chat message objects
-- [hyperparam_utils](tinker_cookbook/hyperparam_utils.py) helps calculate hyperparameters suitable for LoRAs
-- [evaluation](tinker_cookbook/eval/evaluators.py) provides abstractions for evaluating Tinker models and [inspect_evaluation](tinker_cookbook/eval/inspect_evaluators.py) shows how to integrate with InspectAI to make evaluating on standard benchmarks easy.
+- [`renderers`](tinker_cookbook/renderers.py) converts tokens from/to structured chat message objects
+- [`hyperparam_utils`](tinker_cookbook/hyperparam_utils.py) helps calculate hyperparameters suitable for LoRAs
+- [`evaluation`](tinker_cookbook/eval/evaluators.py) provides abstractions for evaluating Tinker models and [`inspect_evaluation`](tinker_cookbook/eval/inspect_evaluators.py) shows how to integrate with InspectAI to make evaluating on standard benchmarks easy.
 
 ## Contributing
 

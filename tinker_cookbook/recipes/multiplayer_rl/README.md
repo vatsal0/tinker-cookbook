@@ -4,9 +4,9 @@ Often we not only want large language models (LLMs) to generate a single respons
 To help Tinker users easily customize their own training, we provide the *Environment* abstraction.
 
 We cover three examples, with increasing complexity.
-1. Guess the number: where the policy learns to guess the target number with multiple tries, given feedback on whether the number is too high or low.
-2. Twenty Questions: where the policy learns to guess an underlying object by asking yes/no questions.
-3. Tic-Tac-Toe: where the policy learns by playing against itself.
+1. [Guess the number](./guess_number/): where the policy learns to guess the target number with multiple tries, given feedback on whether the number is too high or low.
+2. [Twenty Questions](./twenty_questions): where the policy learns to guess an underlying object by asking yes/no questions.
+3. [Tic-Tac-Toe](./text_arena): where the policy learns by playing against itself.
 
 The first example is the simplest, since the user turn can be programmed with simple python statements.
 The second is more complicated, since we need a language model to answer yes/no questions to the policy.

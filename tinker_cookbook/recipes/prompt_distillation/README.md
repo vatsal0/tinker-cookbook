@@ -24,7 +24,7 @@ The Tinker Cookbook provides a prompt distillation recipe tailored for a languag
 ar (Arabic), de (German), el (Greek), en (English), es (Spanish), fr (French), hi (Hindi), ru (Russian), tr (Turkish), ur (Urdu), vi (Vietnamese), zh (Chinese - Simplified), ot (Other/Unknown).
 ```
 
-The recipe in `create_data.py` also includes handling strategies for inputs containing code, numerical content, or multiple languages.
+The recipe in [`create_data.py`](create_data.py) also includes handling strategies for inputs containing code, numerical content, or multiple languages.
 
 In the example below, the same model (`Qwen/Qwen3-30B-A3B`) is used as both teacher and student, though in general they need not be identical.
 
@@ -32,7 +32,7 @@ In the example below, the same model (`Qwen/Qwen3-30B-A3B`) is used as both teac
 
 ### Step 1: Generate Training Data
 
-Generate prompt distillation data using the teacher model with `create_data.py`:
+Generate prompt distillation data using the teacher model with [`create_data.py`](create_data.py):
 
 ```bash
 mkdir -p /tmp/tinker-datasets
@@ -47,7 +47,7 @@ This command will:
 
 ### Step 2: Train the Student Model
 
-Fine-tune a student model on the distillation data using `train.py`:
+Fine-tune a student model on the distillation data using [`train.py`](train.py):
 
 ```bash
 python -m tinker_cookbook.recipes.prompt_distillation.train
