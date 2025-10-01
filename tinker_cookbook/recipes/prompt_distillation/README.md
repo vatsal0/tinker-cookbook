@@ -35,7 +35,6 @@ In the example below, the same model (`Qwen/Qwen3-30B-A3B`) is used as both teac
 Generate prompt distillation data using the teacher model with `create_data.py`:
 
 ```bash
-mkdir -p /tmp/tinker-datasets
 python -m tinker_cookbook.recipes.prompt_distillation.create_data \
   output_file=/tmp/tinker-datasets/prompt_distillation_lang.jsonl
 ```

@@ -1,8 +1,6 @@
 # Tinker is a training API for researchers and developers
 
-<p align="center">
-  <img src="tinker-cover.png" width="60%" />
-</p>
+![Tinker Cover](tinker-cover.png)
 
 To help the broader community customize their language models, we release two libraries: Tinker and Tinker Cookbook.
 - Tinker includes primitives to fine-tune language models. It sends API requests to us, while we handle the complexity of distributed training.
