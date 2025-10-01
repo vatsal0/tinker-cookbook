@@ -1,6 +1,8 @@
 # Tinker is a training API for researchers and developers
 
-![Tinker Cover](tinker-cover.png)
+<p align="center">
+  <img src="tinker-cover.png" width="60%" />
+</p>
 
 To help the broader community customize their language models, we release two libraries: Tinker and Tinker Cookbook.
 - Tinker includes primitives to fine-tune language models. It sends API requests to us, while we handle the complexity of distributed training.
@@ -9,8 +11,8 @@ To help the broader community customize their language models, we release two li
 ## Installation
 
 1. Obtain a Tinker API token and export it as `TINKER_API_KEY`. // TODO(tianyi): add onboarding flow link
-2. Install tinker python client via `pip install git+https://github.com/thinking-machines-lab/tinker.git` // TODO(tianyi): update to pypi
-3. As a starting point, we recommend cloning this repo locally and installing it via `pip install -e .`.
+2. Install tinker python client via `pip install tinker`
+3. We recommend installing `tinker-cookbook` in a virtual env either with `conda` or `uv`. For running most examples, you can install via `pip install -e .`.
 
 ## Tinker
 
