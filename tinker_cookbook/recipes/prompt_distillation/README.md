@@ -1,36 +1,21 @@
 # Prompt Distillation
 
-Prompt distillation is a training technique in which a model is optimized to behave as though it had been provided with a long and complex prompt, without requiring access to that prompt during inference.
+Prompt Distillation -- also known as context distillation [1,2] -- is a training method that can "make an LLM internalize the prompt into its parameters".
+In this method, the model is fine-tuned to behave as if it had been provided with a long and complex prompt, even without actually accessing it.
 
-At a high level, this procedure involves two main steps:
-- **Creation of distillation data**: A teacher prompt, which is typically lengthy and highly detailed, provides explicit, step-by-step instructions. A teacher model uses this prompt to generate responses for a set of queries.
-- **Training the student model**: A student model is then trained (or fine-tuned) on the distilled dataset, thereby learning to reproduce the essential behaviors and reasoning encoded in the teacher’s instructions.
+For example, we want to internalize the following target prompt $p$:
 
----
+`Classify the language of the provided text into these labels: en, fr, zh, ja ...`
 
-## Overview
+After prompt distillation, the LLM will respond with only the language label after receiving a query without seeing the prompt $p$, e.g.,
+```
+Query: 一生、バンドしてくれる？
+Response: ja
+```
 
-Let $f_T$ and $f_S$ denote the teacher and student models, respectively. Given an instruction prompt $P$ and a query $q_i$, the teacher model generates a response $r_i$:
-
-$$
-r_i = f_T([P, q_i])
-$$
-
-Here, the prompt $P$ and the query $q_i$ are concatenated to form the input to the teacher model $f_T$. For a dataset of queries $Q = \{q_i \mid 1 \leq i \leq D\}$, we obtain a corresponding set of teacher responses $R = \{r_i \mid 1 \leq i \leq D\}$.
-
-The distillation training dataset is defined as the set of query–response pairs (excluding the original prompt):
-
-$$
-T = \{(q_i, r_i) \mid 1 \leq i \leq D\}.
-$$
-
-The student model $f_S$ is then trained to minimize the cross-entropy loss:
-
-$$
-\ell(f_S(q_i), r_i) = \ell(f_S(q_i), f_T([P, q_i])).
-$$
-
----
+At a high level, this method involves two stages:
+1. **Creating data for distillation**: A teacher language model uses $p$ to generate responses $r$ on a set of queries $q$; i.e. $r \sim \text{teacher}(\cdot|p, q)$
+2. **Training the student model**: A student model is fine-tuned to predict the responses $r$ to the query $q$ but without accessing $p$, hence learning to behave as if the target prompt is in its context; i.e. $\text{student}(\cdot | q)$ should predict $r$
 
 ## Example
 
@@ -47,7 +32,7 @@ In the example below, the same model (`Qwen/Qwen3-30B-A3B`) is used as both teac
 
 ### Step 1: Generate Training Data
 
-Create prompt distillation data using the teacher model using `create_data.py`:
+Generate prompt distillation data using the teacher model with `create_data.py`:
 
 ```bash
 python -m tinker_cookbook.recipes.prompt_distillation.create_data \
@@ -84,3 +69,7 @@ The prompt distillation recipe can be customized for different scenarios:
 - **Sampling strategies**: Adjust temperature and other generation parameters
 - **Data volume**: Scale the number of generated examples based on your needs
 - **Training hyperparameters**: Fine-tune learning rates and other training settings
+
+[1] Askell, A., Bai, Y., Chen, A., Drain, D., Ganguli, D., Henighan, T., Jones, A., Joseph, N., Mann, B., DasSarma, N., Elhage, N., Hatfield-Dodds, Z., Hernandez, D., Kernion, J., Ndousse, K., Olsson, C., Amodei, D., Brown, T., Clark, J., McCandlish, S., Olah, C., & Kaplan, J. (2021). A general language assistant as a laboratory for alignment. arXiv preprint arXiv:2112.00861.
+
+[2] Snell, C., Klein, D., & Zhong, R. (2022). Learning by distilling context. arXiv preprint arXiv:2209.15189.

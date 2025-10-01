@@ -8,13 +8,13 @@ Math problems have been the most active testbed for RL with LLMs. This recipe co
 Trivial, but runs fast enough that you can see it learn. Reward should go from 0.66 to 1 in the first few steps.
 
 ```bash
-python -m recipes.math_rl.train model_name="meta-llama/Llama-3.2-1B" group_size=4 groups_per_batch=100 learning_rate=1e-4
+python -m tinker_cookbook.recipes.math_rl.train model_name="meta-llama/Llama-3.2-1B" group_size=4 groups_per_batch=100 learning_rate=1e-4
 ```
 
 ## RL on MATH dataset.
 
 ```bash
-python -m recipes.math_rl.train env=math model_name="Qwen/Qwen3-8B" group_size=16 groups_per_batch=64 learning_rate=2e-5 max_tokens=512
+python -m tinker_cookbook.recipes.math_rl.train env=math model_name="Qwen/Qwen3-8B" group_size=16 groups_per_batch=64 learning_rate=2e-5 max_tokens=512
 ```
 
 After 180 steps of training, we observe `"test/env/all/correct": 0.767578125`, which is logged to `/tmp/tinker-examples/math_rl/math-Qwen_Qwen3-8B-32rank-2e-05lr-${DATE}/metrics.jsonl`.
@@ -63,7 +63,7 @@ So the best possible is sum1=20 and sum2=21, product 420. So the maximum sum is 
 # RL on GSM8K
 
 ```bash
-uv run python -m public.tinker-cookbook.tinker_cookbook.recipes.math_rl.train env=gsm8k model_name="meta-llama/Llama-3.1-8B-Instruct" group_size=64 groups_per_batch=32 learning_rate=8e-5 max_tokens=1024
+python -m tinker_cookbook.recipes.math_rl.train env=gsm8k model_name="meta-llama/Llama-3.1-8B-Instruct" group_size=64 groups_per_batch=32 learning_rate=8e-5 max_tokens=1024
 ```
 
 Generally, you should observe that training reward goes above 0.8 within a few steps. After 220 steps of training, we achieve `"test/env/all/correct": 0.9090`. A smaller group_size (8) and larger `groups_per_batch` (64) will achieve `0.8824` accuracy in around a quarter of the time.

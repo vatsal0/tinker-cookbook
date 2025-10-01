@@ -14,9 +14,9 @@ python -m tinker_cookbook.recipes.chat_sl.train
     wandb_project=cookbook_sl
 ```
 
-After 140 steps of training, we achieve `"test/nll": 1.7878098487854004`. This example should finish within 10 minutes.
+After 140 steps of training, `test/nll` decreases to 1.788.
 
-## SFT on Tulu3 dataset.
+## SFT on Tulu3 dataset
 
 ```bash
 python -m tinker_cookbook.recipes.chat_sl.train
@@ -29,9 +29,11 @@ python -m tinker_cookbook.recipes.chat_sl.train
     save_every=500 \
     wandb_project=cookbook_sl
 ```
-After 1740 steps of training, we achieve a test loss around 0.50. Running with the example hyperparameters takes around ~6h. By increasing lora_rank and lowering batch_size, we can achieve better test nll with longer run time.
 
-## Add your own dataset
+After 1740 steps of training, `test/nll` decreases to 0.50.
+Performance can be further improved by training longer with a higher `lora_rank` and lower `batch_size`.
+
+## Adding your own dataset
 
 The base classes in `tinker-cookbook/tinker_cookbook/supervised/data.py` support loading new data in the following way:
 - `SupervisedDatasetFromHFDataset` loads dataset on huggingface hub with a postprocessing function

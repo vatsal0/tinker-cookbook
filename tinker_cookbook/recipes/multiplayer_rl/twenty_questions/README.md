@@ -1,7 +1,7 @@
 # Playing Twenty Questions Against Another Language Model
 
 ```bash
-python -m recipes.multiplayer_rl.twenty_questions.train
+python -m tinker_cookbook.recipes.multiplayer_rl.twenty_questions.train
 ```
 
 The `test/env/all/reward/total` should increase from ~10% to ~20% after 20 steps.

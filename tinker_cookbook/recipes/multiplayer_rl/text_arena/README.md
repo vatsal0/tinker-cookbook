@@ -4,7 +4,7 @@ Many research studies involve training several different language model agents j
 We show how to coordinate the steps of two *Environment* objects such that both the winning and the losing trajectory will be used to fine-tune the weights.
 
 ```bash
-python -m recipes.multiplayer_rl.text_arena.train
+python -m tinker_cookbook.recipes.multiplayer_rl.text_arena.train
 ```
 
 The `test/env/all/reward/total` should increase from ~ -1.0 to >=0 in 40 steps.

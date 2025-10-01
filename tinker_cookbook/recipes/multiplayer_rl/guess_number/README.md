@@ -1,7 +1,7 @@
 # A Simple `Environment` for Guessing the Number
 
 ```bash
-python3 -m recipes.multiplayer_rl.guess_number.train
+python -m tinker_cookbook.recipes.multiplayer_rl.guess_number.train
 ```
 
 The `test/env/all/reward/total` should increase from ~40% to >=50% in 20 steps.

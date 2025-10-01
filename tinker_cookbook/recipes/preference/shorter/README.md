@@ -1,10 +1,10 @@
 # Generating Shorter Responses via Comparisons
 
 ```bash
-python -m recipes.preference.shorter.train
+python -m tinker_cookbook.recipes.preference.shorter.train
 ```
 
-You should see that `ac_tokens_per_turn` drops significantly after 40 steps. The policy generates significantly shorter responses.
+`ac_tokens_per_turn` should drop significantly after 40 steps. The policy generates significantly shorter responses.
 
 ### Using the `PairwisePreferenceRLDatasetBuilder` class
 

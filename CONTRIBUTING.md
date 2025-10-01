@@ -1,5 +1,9 @@
 # Development
 
+This project is built in the spirit of open science and collaborative development. We believe that the best tools emerge through community involvement and shared learning.
+
+We welcome PR contributions after our private beta is over. If you have any feedback, please email us at tinker@thinkingmachines.ai.
+
 ## Organization of training scripts
 
 We're designing the codebase with the following goals:
@@ -71,11 +75,3 @@ Examples:
 - `rewards_G`: Rewards for each attempt within a group
 - `tokens_P_G_T`: Tokens with problem, group, and time dimensions
 - `data_D`: A list of training data items
-
-## Testing
-
-TODO(tianyi): add testing info
-
-# Call for Proposals
-
-TODO(tianyi): add
