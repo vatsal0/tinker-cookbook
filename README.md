@@ -11,7 +11,26 @@ Tinker cookbook collects recommended programming patterns, reusable utilities, a
 
 ## Usage
 
-We build Tinker cookbook to allow flexible usage. You can run our examples, build your own training loop, or simply import useful utilities from this repo.
+Tinker cookbook recipes are designed to be realistic and thorough. Use them for inspiration; import our utilities!
+
+Refer to the [docs](https://tinker-docs.thinkingmachines.ai/training-sampling) to start from basics.
+
+And remember you can always directly use Tinker's primitives:
+```python
+service_client = tinker.ServiceClient()
+training_client = service_client.create_lora_training_client(
+  base_model="meta-llama/Llama-3.2-1B", rank=32,
+)
+
+training_client.forward_backward(...)
+training_client.optim_step(...)
+training_client.save_state(...)
+training_client.load_state(...)
+
+sampling_client = training_client.save_weights_and_get_sampling_client(name="my_model")
+sampling_client.sample(...)
+```
+
 
 ### Running our examples
 

@@ -156,6 +156,8 @@ def main(cfg: Config):
     elif not os.path.exists(os.path.dirname(cfg.output_file)):
         # check if the output directory exists
         print(f"Output directory {os.path.dirname(cfg.output_file)} does not exist")
+        print(f"Creating directory {os.path.dirname(cfg.output_file)}")
+        os.makedirs(os.path.dirname(cfg.output_file), exist_ok=True)
         return
 
     # Setup clients synchronously

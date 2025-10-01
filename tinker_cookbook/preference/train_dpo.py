@@ -71,38 +71,36 @@ class Config:
 def create_dpo_clients(
     config: Config,
     resume_info: dict[str, Any] | None = None,
-) -> tuple[tinker.TrainingClient, tinker.TrainingClient]:
-    """Create and configure the training clients for DPO.
+) -> tuple[tinker.TrainingClient, tinker.SamplingClient]:
+    """Create and configure the training client and reference sampling client for DPO.
 
-    Creates both the main training client and the reference client.
-    The reference client is used to compute the reference model's log probabilities
-    for the DPO loss computation.
+    Creates the main training client and a reference sampling client.
+    The reference sampling client is used to compute the reference model's log probabilities
+    for the DPO loss computation more efficiently than a separate training client.
 
     Args:
         config: DPO configuration object
         resume_info: Resume information from checkpoint
 
     Returns:
-        Tuple of (main training client, reference client)
+        Tuple of (main training client, reference sampling client)
     """
     # Create shared service client for both training and reference clients
     service_client = tinker.ServiceClient(base_url=config.base_url)
+    training_client = service_client.create_lora_training_client(
+        base_model=config.model_name, rank=config.lora_rank
+    )
+
+    # Load state first to get the SFT checkpoint path for the reference client
     load_state_path: str | None = (
         resume_info["state_path"] if resume_info else config.load_checkpoint_path
     )
-
     if load_state_path:
-        training_client = service_client.create_training_client_from_state(load_state_path)
-        reference_client = service_client.create_training_client_from_state(load_state_path)
+        # Load state into the training client
+        training_client.load_state(load_state_path)
         logger.info(f"Loaded weights from {load_state_path}")
-    else:
-        training_client = service_client.create_lora_training_client(
-            base_model=config.model_name, rank=config.lora_rank
-        )
-        reference_client = service_client.create_lora_training_client(
-            base_model=config.reference_model_name or config.model_name, rank=config.lora_rank
-        )
-
+    # Create a sampling client for the reference model from the training client
+    reference_client = training_client.save_weights_and_get_sampling_client("reference")
     return training_client, reference_client
 
 
@@ -161,7 +159,7 @@ def do_update(
     total_steps: int,
     config: Config,
     training_client: tinker.TrainingClient,
-    reference_client: tinker.TrainingClient,
+    reference_client: tinker.SamplingClient,
     evaluators: list[Evaluator],
     infrequent_evaluators: list[Evaluator],
     dataset: SupervisedDataset,
@@ -222,15 +220,34 @@ def do_update(
             print_example(chosen_data[i], tokenizer, "Chosen")
             print_example(rejected_data[i], tokenizer, "Rejected")
 
-    # Get reference log probabilities using single forward pass on original data
-    all_ref_result = reference_client.forward(data, "cross_entropy").result()
-    all_ref_logprob_seqs = [
-        torch.tensor(out["logprobs"].data) for out in all_ref_result.loss_fn_outputs
-    ]
+    with timed("get_ref_logprobs", metrics):
+        # Get reference log probabilities using synchronous compute_logprobs
+        # Need to reconstruct full sequences for the sampling client
+        full_sequences = []
+        for datum in data:
+            # Reconstruct the full sequence by appending the last target token
+            target_tokens = datum.loss_fn_inputs["target_tokens"].data
+            if target_tokens:
+                full_sequence = datum.model_input.append_int(int(target_tokens[-1]))
+                full_sequences.append(full_sequence)
+            else:
+                # If no target tokens, just use the model input as is
+                full_sequences.append(datum.model_input)
 
-    # Split reference results into chosen and rejected
-    chosen_ref_logprob_seqs = [all_ref_logprob_seqs[i] for i in range(0, len(data), 2)]
-    rejected_ref_logprob_seqs = [all_ref_logprob_seqs[i] for i in range(1, len(data), 2)]
+        # Compute reference log probabilities in parallel
+        async def compute_all_ref_logprobs():
+            return await asyncio.gather(
+                *[reference_client.compute_logprobs_async(seq) for seq in full_sequences]
+            )
+
+        all_ref_logprobs = asyncio.run(compute_all_ref_logprobs())
+
+        # Extract the relevant logprobs (skip the first token which is the prompt)
+        all_ref_logprob_seqs = [torch.tensor(logprobs[1:]) for logprobs in all_ref_logprobs]
+
+        # Split reference results into chosen and rejected
+        chosen_ref_logprob_seqs = [all_ref_logprob_seqs[i] for i in range(0, len(data), 2)]
+        rejected_ref_logprob_seqs = [all_ref_logprob_seqs[i] for i in range(1, len(data), 2)]
 
     # Create DPO loss function
     def dpo_loss_fn(

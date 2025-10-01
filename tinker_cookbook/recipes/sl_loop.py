@@ -16,6 +16,7 @@ from tinker_cookbook.tokenizer_utils import get_tokenizer
 from tinker_cookbook.utils import ml_log
 
 logger = logging.getLogger(__name__)
+logging.getLogger("httpx").setLevel(logging.WARN)
 
 
 @chz.chz

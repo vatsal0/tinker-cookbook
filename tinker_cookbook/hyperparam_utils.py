@@ -89,23 +89,12 @@ def _get_hidden_size(model_name: str) -> int:
     return config.hidden_size
 
 
-def _get_num_experts_per_tok(model_name: str) -> int:
-    assert not model_name.startswith("meta-llama/Llama-3"), (
-        "Llama-3 models don't have num_experts_per_tok"
-    )
-    config = AutoConfig.from_pretrained(model_name)
-    assert hasattr(config, "num_experts_per_tok"), (
-        "num_experts_per_tok is not in the model config, can't calculate with scale_moe_rank_by_topk"
-    )
-    return config.num_experts_per_tok
-
-
 def get_lora_param_count(
     model_name: str,
     lora_rank: int = 32,
-    scale_moe_rank_by_topk: bool = True,
     detailed: bool = False,
     include_experts: bool = True,
+    shared_expert_outer_loras: bool = True,
 ) -> int | dict[str, int]:
     """
     Get the number of parameters in the LoRA adapter.
@@ -123,18 +112,25 @@ def get_lora_param_count(
             and name.endswith(".weight")
             and not any([v in name.split(".") for v in ignore])
         ):
-            if "experts" not in name.split("."):
+            parts = name.split(".")
+            if "experts" not in parts or not shared_expert_outer_loras:
                 dim_sum += shape[0] + shape[1]
             else:
-                dim_sum_experts += shape[0] + shape[1]
+                # For expert shared outer_loras, we only count the outer dims once, since they are shared across experts
+                expert_idx = int(parts[parts.index("experts") + 1])
+                weight_name = parts[parts.index("experts") + 2]
+                assert weight_name in ["gate_proj", "down_proj", "up_proj"], (
+                    f"Unexpected expert weight name: {weight_name}"
+                )
+                intermediate_dim = shape[1] if weight_name == "down_proj" else shape[0]
+                outer_dim = shape[0] if weight_name == "down_proj" else shape[1]
+
+                dim_sum_experts += intermediate_dim
+                if expert_idx == 0:
+                    dim_sum_experts += outer_dim
 
     non_expert_params = lora_rank * dim_sum
-
-    if scale_moe_rank_by_topk and dim_sum_experts > 0:
-        moe_rank_scale = _get_num_experts_per_tok(model_name)
-    else:
-        moe_rank_scale = 1
-    expert_params = dim_sum_experts * (lora_rank // moe_rank_scale)
+    expert_params = lora_rank * dim_sum_experts
 
     return (
         (expert_params + non_expert_params)

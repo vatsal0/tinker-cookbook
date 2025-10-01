@@ -84,7 +84,7 @@ def safe_grade(given_answer: str, ground_truth: str, grader: str = "sympy", time
     return out
 
 
-def _extract_gsm8k_final_answer(text: str) -> str:
+def extract_gsm8k_final_answer(text: str) -> str:
     """Extract the final numeric/string answer from a GSM8K solution field.
 
     GSM8K format typically places the final answer on a line starting with
@@ -347,7 +347,7 @@ class Gsm8kDataset(RLDataset):
     ) -> ProblemGroupBuilder | None:
         try:
             problem = x["question"]
-            answer = _extract_gsm8k_final_answer(x["answer"])
+            answer = extract_gsm8k_final_answer(x["answer"])
         except Exception as e:
             logger.warning(f"Failed to parse GSM8K row: {e}")
             return None

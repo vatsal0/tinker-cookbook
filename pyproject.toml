@@ -15,6 +15,12 @@ dependencies = [
     "transformers",
     "blobfile",
     "inspect-ai",
+    "anyio",
+    "pylatexenc",
+    "sympy",
+    "textarena",
+    "math-verify",
+    "scipy",
 ]
 
 [project.optional-dependencies]
@@ -23,14 +29,6 @@ dev = [
     "pytest-asyncio",
     "ruff",
     "pyright",
-]
-envs = [
-    "anyio",
-    "pylatexenc",
-    "sympy",
-    "textarena",
-    "math-verify",
-    "scipy",
 ]
 vector-search = [
     "chromadb",

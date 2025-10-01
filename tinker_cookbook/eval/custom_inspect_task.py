@@ -9,10 +9,14 @@ To run this task, use:
         model_name=Qwen/Qwen3-8B-Base
 """
 
+import tinker
 from inspect_ai import Task, task
 from inspect_ai.dataset import MemoryDataset, Sample
+from inspect_ai.model import GenerateConfig as InspectAIGenerateConfig
+from inspect_ai.model import Model as InspectAIModel
 from inspect_ai.scorer import model_graded_qa
 from inspect_ai.solver import generate
+from tinker_cookbook.eval.inspect_utils import InspectAPIFromTinkerSampling
 
 QA_DATASET = MemoryDataset(
     name="qa_dataset",
@@ -27,6 +31,20 @@ QA_DATASET = MemoryDataset(
         ),
     ],
 )
+
+service_client = tinker.ServiceClient()
+sampling_client = service_client.create_sampling_client(
+    base_model="meta-llama/Llama-3.1-8B-Instruct"
+)
+
+api = InspectAPIFromTinkerSampling(
+    renderer_name="llama3",  # pyright: ignore[reportCallIssue]
+    model_name="meta-llama/Llama-3.1-8B-Instruct",
+    sampling_client=sampling_client,  # pyright: ignore[reportCallIssue]
+    verbose=False,  # pyright: ignore[reportCallIssue]
+)
+
+GRADER_MODEL = InspectAIModel(api=api, config=InspectAIGenerateConfig())
 
 
 @task
@@ -46,5 +64,6 @@ def example_lm_as_judge() -> Task:
             "Respond 'GRADE: C' if correct or 'GRADE: I' otherwise.",
             partial_credit=False,
             # model parameter is optional - if not specified, uses the model being evaluated
+            model=GRADER_MODEL,
         ),
     )
