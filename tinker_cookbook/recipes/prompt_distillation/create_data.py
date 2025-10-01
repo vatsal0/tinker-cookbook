@@ -96,7 +96,7 @@ def setup_clients():
 
 async def create_data_async(cfg: Config, sampling_client: Any, tokenizer: Any, renderer: Any):
     # read sentences from multilingual.txt file
-    with open("public/tinker-cookbook/example-data/multilingual.txt", "r") as f:
+    with open("example-data/multilingual.txt", "r") as f:
         sentences = f.readlines()
     sentences = [sentence.strip() for sentence in sentences]
 

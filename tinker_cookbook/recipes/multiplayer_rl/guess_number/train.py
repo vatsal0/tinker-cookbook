@@ -18,7 +18,7 @@ class CLIConfig:
     eval_every: int = 5
     save_every: int = 20
     wandb_project: str | None = None
-    wandb_name: str | None
+    wandb_name: str | None = None
     log_path: str | None = None
 
 

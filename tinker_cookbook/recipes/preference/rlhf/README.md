@@ -1,7 +1,7 @@
 # RLHF Pipeline
 
 ```bash
-python -m tinker_cookbook.recipes.comparisons.rlhf.rlhf_pipeline
+python -m tinker_cookbook.recipes.preference.rlhf.rlhf_pipeline
 ```
 
 There are three stages:
