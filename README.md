@@ -36,6 +36,14 @@ sampling_client.sample(...)
 
 See [tinker_cookbook/recipes/sl_loop.py](tinker_cookbook/recipes/sl_loop.py) and [tinker_cookbook/recipes/rl_loop.py](tinker_cookbook/recipes/rl_loop.py) for minimal examples of using these primitives to fine-tune LLMs.
 
+To download the weights of any model:
+```python
+rest_client = service_client.create_rest_client()
+future = rest_client.download_checkpoint_archive_from_tinker_path(sampling_client.model_path)
+with open(f"model-checkpoint.tar.gz", "wb") as f:
+    f.write(future.result())
+```
+
 ### Tinker Cookbook
 
 Besides these primitives, we also offer **Tinker Cookbook** (a.k.a. this repo), a library of a wide range of abstractions to help you customize training environments.
