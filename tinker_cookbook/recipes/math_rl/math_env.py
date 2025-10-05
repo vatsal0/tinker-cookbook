@@ -1,7 +1,7 @@
 import math
 import re
 from functools import partial
-from typing import Literal, cast
+from typing import Literal, Sequence, cast
 
 import chz
 from datasets import Dataset, concatenate_datasets, get_dataset_config_names, load_dataset
@@ -153,7 +153,7 @@ class MathDataset(RLDataset):
         self.renderer = renderer
         self.convo_prefix = convo_prefix
 
-    def get_batch(self, index: int) -> list[EnvGroupBuilder]:
+    def get_batch(self, index: int) -> Sequence[EnvGroupBuilder]:
         batch_start = index * self.batch_size
         batch_end = min((index + 1) * self.batch_size, len(self.ds))
         assert batch_start < batch_end, "Incorrect batch size"
@@ -329,7 +329,7 @@ class Gsm8kDataset(RLDataset):
     def question_suffix(cls) -> str:
         return " Provide a numerical answer without units, written inside \\boxed{}."
 
-    def get_batch(self, index: int) -> list[EnvGroupBuilder]:
+    def get_batch(self, index: int) -> Sequence[EnvGroupBuilder]:
         batch_start = index * self.batch_size
         batch_end = min((index + 1) * self.batch_size, len(self.ds))
         assert batch_start < batch_end, "Incorrect batch size"

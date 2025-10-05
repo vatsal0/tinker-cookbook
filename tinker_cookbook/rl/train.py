@@ -8,7 +8,7 @@ import io
 import logging
 import os
 import time
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Sequence
 
 import chz
 import numpy as np
@@ -567,7 +567,7 @@ async def save_checkpoint_and_get_sampling_client(
 
 async def prepare_minibatch(
     cfg: Config,
-    env_group_builders_P: list[EnvGroupBuilder],
+    env_group_builders_P: Sequence[EnvGroupBuilder],
     trajectory_groups_P: list[TrajectoryGroup],
     tokenizer: Tokenizer,
     service_client: tinker.ServiceClient,
@@ -744,7 +744,7 @@ async def do_train_step_and_get_sampling_client(
     training_client: tinker.TrainingClient,
     service_client: tinker.ServiceClient,
     tokenizer: Tokenizer,
-    env_group_builders_P: list[EnvGroupBuilder],
+    env_group_builders_P: Sequence[EnvGroupBuilder],
     trajectory_groups_P: list[TrajectoryGroup],
 ) -> tuple[tinker.SamplingClient, dict[str, Any]]:
     metrics = {}
