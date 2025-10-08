@@ -123,7 +123,7 @@ async def get_logprob_reward(base_sampling_client: SamplingClient, tokenizer, to
         tokenized_answer = tokenizer.encode(answer)
         answer_start = find_last_subsequence(tokens, tokenized_answer)
         answer_logprobs = base_logprobs[answer_start:answer_start + len(tokenized_answer)]
-        mean_logprob = sum(answer_logprobs) / len(answer_logprobs)
+        mean_logprob = sum(answer_logprobs) / max(len(answer_logprobs), 1)
         logprob_reward -= 0.5 * numpy.exp(mean_logprob)
 
     return {
@@ -156,11 +156,11 @@ async def get_attn_reward(sampling_client: SamplingClient, tokenizer, tokens: li
 
         orig_answer_start = find_last_subsequence(tokens, tokenized_answer)
         orig_answer_logprobs = orig_logprobs[orig_answer_start:orig_answer_start + len(tokenized_answer)]
-        orig_mean_logprob = sum(orig_answer_logprobs) / len(orig_answer_logprobs)
+        orig_mean_logprob = sum(orig_answer_logprobs) / max(len(orig_answer_logprobs), 1)
 
         masked_answer_start = find_last_subsequence(spliced_tokens, tokenized_answer)
         masked_answer_logprobs = masked_logprobs[masked_answer_start:masked_answer_start + len(tokenized_answer)]
-        masked_mean_logprob = sum(masked_answer_logprobs) / len(masked_answer_logprobs)
+        masked_mean_logprob = sum(masked_answer_logprobs) / max(len(masked_answer_logprobs), 1)
 
         # positive if the model did better seeing the q1 trace
         logprob_diff = orig_mean_logprob - masked_mean_logprob
@@ -275,7 +275,7 @@ async def main(config: Config):
 
         # Save checkpoint
         if step % config.save_every == 0 and step > 0:
-            checkpoint_utils.save_checkpoint(
+            await checkpoint_utils.save_checkpoint_async(
                 training_client=training_client,
                 name=f"{step:06d}",
                 log_path=config.log_path,
@@ -307,8 +307,8 @@ async def main(config: Config):
 
             reward_tasks = []
             for val_batch_idx in range(n_val_batches):
-                val_batch_start = batch_idx * config.batch_size
-                val_batch_end = min((batch_idx + 1) * config.batch_size, len(val_dataset))
+                val_batch_start = val_batch_idx * config.batch_size
+                val_batch_end = min((val_batch_idx + 1) * config.batch_size, len(val_dataset))
                 val_batch_rows = val_dataset.select(range(val_batch_start, val_batch_end))
 
                 val_batch_futures: list[list[Future[types.SampleResponse]]] = []
@@ -451,7 +451,7 @@ async def main(config: Config):
 
         # Training step
         fwd_bwd_future = training_client.forward_backward(
-            training_datums, loss_fn="ppo"
+            training_datums, loss_fn="importance_sampling"
         )
         optim_step_future = training_client.optim_step(adam_params)
         _fwd_bwd_result = fwd_bwd_future.result()
@@ -464,7 +464,7 @@ async def main(config: Config):
         ml_logger.log_metrics(metrics, step=batch_idx)
 
         # Save final checkpoint
-    checkpoint_utils.save_checkpoint(
+    await checkpoint_utils.save_checkpoint_async(
         training_client=training_client,
         name="final",
         log_path=config.log_path,
