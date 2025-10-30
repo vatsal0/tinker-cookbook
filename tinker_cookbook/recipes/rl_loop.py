@@ -59,7 +59,7 @@ Your answer for each question must only contain a single integer with no additio
 logger = logging.getLogger(__name__)
 logging.getLogger("httpx").setLevel(logging.WARN)
 
-# source .bashrc; conda activate inspect; cd tinker-cookbook; python tinker_cookbook/recipes/rl_loop.py log_path=checkpoints/encoded_235b model_name=Qwen/Qwen3-235B-A22B-Instruct-2507 reward=encoded
+# source .bashrc; conda activate inspect; cd tinker-cookbook; python tinker_cookbook/recipes/rl_loop.py log_path=checkpoints/blind_8b_mult model_name=Qwen/Qwen3-8B reward=blind
 
 @chz.chz
 class Config:
@@ -153,6 +153,26 @@ async def get_encoded_reward(tokens: list[int], response: str, answer: str) -> d
     format_pattern = fr"<reasoning>\s*.*?\s*</reasoning>\s*<answer1>\s*.*?\s*</answer1>\s*<answer2>\s*.*?\s*</answer2>$"
 
     if re.search(format_pattern, response):
+        format_reward += 0.2
+
+        parsed_answer = extract_xml(response, '<answer2>', '</answer2>')
+
+        if parsed_answer == answer:
+            correctness_reward += 0.8
+
+    return {
+        "score": format_reward + correctness_reward,
+        "format_reward": format_reward,
+        "correctness_reward": correctness_reward,
+    }
+
+async def get_blind_reward(tokens: list[int], response: str, answer: str) -> dict:
+    format_reward = 0
+    correctness_reward = 0
+    
+    format_pattern = fr"\s*.*?\s*</answer2>$"
+
+    if re.match(format_pattern, response):
         format_reward += 0.2
 
         parsed_answer = extract_xml(response, '<answer2>', '</answer2>')
@@ -280,6 +300,42 @@ async def main(config: Config):
         )
     ])
 
+    import random
+    random.seed(12345)
+    N_train = 5000
+    N_val = 500
+    n = 5
+
+    a = list(range(10 ** (n-1), 10 ** n)) * 100
+    b = list(range(10 ** (n-1), 10 ** n)) * 100
+    random.shuffle(a)
+    random.shuffle(b)
+
+    a_iter = iter(a)
+    b_iter = iter(b)
+
+    train_samples = []
+    val_samples = []
+
+    for _ in range(N_train * config.num_epochs):
+        a1, b1 = next(a_iter), next(b_iter)
+        a2, b2 = next(a_iter), next(b_iter)
+        train_samples.append({
+            'question': f'''Question 1:\nWhat is {a1} times {b1}?\n\nQuestion 2:\nWhat is {a2} times {b2}?''',
+            'answer': str(a2*b2),
+        })
+
+    for _ in range(N_val):
+        a1, b1 = next(a_iter), next(b_iter)
+        a2, b2 = next(a_iter), next(b_iter)
+        val_samples.append({
+            'question': f'''Question 1:\nWhat is {a1} times {b1}?\n\nQuestion 2:\nWhat is {a2} times {b2}?''',
+            'answer': str(a2*b2),
+        })
+
+    train_dataset = datasets.Dataset.from_list(train_samples)
+    val_dataset = datasets.Dataset.from_list(val_samples)
+
     convo_prefix = [
         {
             "role": "system",
@@ -357,6 +413,8 @@ async def main(config: Config):
             get_reward = partial(get_attn_reward, sampling_client, tokenizer)
         elif config.reward == "encoded":
             get_reward = get_encoded_reward
+        elif config.reward == "blind":
+            get_reward = get_blind_reward
         else:
             raise NotImplementedError(config.reward)
 
@@ -371,12 +429,14 @@ async def main(config: Config):
 
                 val_batch_futures: list[list[Future[types.SampleResponse]]] = []
                 val_batch_inputs: list[ModelInput] = []
-                for question in val_batch_rows["question"]:
+                for question, answer in zip(val_batch_rows["question"], val_batch_rows["answer"]):
                     convo = [
                         *convo_prefix,
                         {"role": "user", "content": question},
                     ]
-                    model_input = renderer.build_generation_prompt(convo)
+                    answer1 = answer.split('####')[-1].strip()
+                    prefill = f'<reasoning1>\n...\n</reasoning1>\n\n<answer1>\n{answer1}\n</answer1>\n\n<reasoning2>\n...\n</reasoning2>\n\n<answer2>\n'
+                    model_input = renderer.build_generation_prompt(convo, prefill=prefill if config.reward == "blind" else None)
                     prompt_tokens = model_input.to_ints()
 
                     # Generate response
@@ -419,12 +479,14 @@ async def main(config: Config):
         batch_futures: list[list[Future[types.SampleResponse]]] = []
         batch_inputs: list[ModelInput] = []
         batch_metrics = defaultdict(list)
-        for question in batch_rows["question"]:
+        for question, answer in zip(batch_rows["question"], batch_rows["answer"]):
             convo = [
                 *convo_prefix,
                 {"role": "user", "content": question},
             ]
-            model_input = renderer.build_generation_prompt(convo)
+            answer1 = answer.split('####')[-1].strip()
+            prefill = f'<reasoning1>\n...\n</reasoning1>\n\n<answer1>\n{answer1}\n</answer1>\n\n<reasoning2>\n...\n</reasoning2>\n\n<answer2>\n'
+            model_input = renderer.build_generation_prompt(convo, prefill=prefill if config.reward == "blind" else None)
             prompt_tokens = model_input.to_ints()
 
             # Generate response
