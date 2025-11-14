@@ -78,7 +78,7 @@ class Config:
     train_on_what: renderers.TrainOnWhat = renderers.TrainOnWhat.ALL_ASSISTANT_MESSAGES
     lora_rank: int = 32
     save_every: int = 50
-    num_epochs: int = 5
+    num_epochs: int = 50
     n: int = 5
 
 
@@ -202,9 +202,10 @@ def main(config: Config):
                 answer_mask = (resp_tokens >= 15) & (resp_tokens <= 24)
 
                 base_resp_tokens = np.array(base_data.loss_fn_inputs['weights'].data) * np.array(base_data.model_input.chunks[0].tokens)
+                base_resp_mask = base_resp_tokens > 0
                 base_answer_mask = (base_resp_tokens >= 15) & (base_resp_tokens <= 24)
 
-                loss += -(seq_logprobs[answer_mask] - base_logprobs[base_answer_mask]).sum() - seq_logprobs[resp_mask & ~answer_mask].sum()
+                loss += -(seq_logprobs[answer_mask] - base_logprobs.detach()[base_answer_mask]).sum() - base_logprobs[base_resp_mask & ~base_answer_mask].sum() - seq_logprobs[resp_mask & ~answer_mask].sum()
 
             return loss, {"logprob_diff_loss": loss.item()}
         fwd_bwd_future = training_client.forward_backward_custom(batch, loss_fn)
